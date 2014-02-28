@@ -329,6 +329,7 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
       for(int m=0;m<3;m++)
 	{
 	  const Vector<3> v3Motion = cam.se3CfW.get_rotation().get_matrix().T()[m];
+
 	  Vector<2> v2CamFrameMotion;
 	  v2CamFrameMotion[0] = (v3Motion[0] - v4Cam[0] * v3Motion[2] * dOneOverCameraZ) * dOneOverCameraZ;
 	  v2CamFrameMotion[1] = (v3Motion[1] - v4Cam[1] * v3Motion[2] * dOneOverCameraZ) * dOneOverCameraZ;

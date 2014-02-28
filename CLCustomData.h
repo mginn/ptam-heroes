@@ -90,3 +90,14 @@ typedef struct clvCorners
 	int vCon[2];
 
 }clvCorners;
+
+typedef struct clCam
+{
+	bool bFixed;
+	  SE3<> se3CfW;
+	  SE3<> se3CfWNew;
+	  double m6U[6][6];          // Accumulator
+	  double EpsilonA[6];   // Accumulator
+	  //int nStartRow;
+}
+};
