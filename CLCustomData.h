@@ -99,5 +99,33 @@ typedef struct clCam
 	  double m6U[6][6];          // Accumulator
 	  double EpsilonA[6];   // Accumulator
 	  //int nStartRow;
-}
+}clCam;
+
+typedef struct clPoint
+{
+  //double v3Pos[3];
+  //double v3PosNew[3];
+  double m3V[3][3];          // Accumulator
+  //double v3EpsilonB[3];   // Accumulator
+  //double m3VStarInv[3][3];
+
+  //int nMeasurements;
+  //int nOutliers;
+  //std::set<int> sCameras; // Which cameras observe this point?
+  //std::vector<OffDiagScriptEntry> vOffDiagonalScript; // A record of all camera-camera pairs observing this point
+}clPoint;
+
+typedef struct clMeas
+{
+	int p;
+	int c;
+	bool bBad;
+	double dErrorSquared;
+	double v2Epsilon[2];
+	double m2CamDerivs[2][2];
+	double v3Cam[3];
+	double m26A[2][6];
+	double dSqrtInvNoise;
+	double m23B[2][3];
+}clMeas;
 };
