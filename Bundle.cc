@@ -271,6 +271,18 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
   printf("Loop itration at line 250 Bundle.cc mMeasList.begin() %d\n", std::distance(mMeasList.begin(),mMeasList.end()));
   double i254=get_wall_time();
 
+  int iLength = std::distance(mMeasList.begin(),mMeasList.end());
+
+  clMeas* cMeas;
+  cMeas = (clMeas*)malloc(mMeasList.size() * sizeof(clMeas));
+
+
+
+  for(list<Meas>::iterator itr = mMeasList.begin(); itr!=mMeasList.end(); itr++)
+  {
+
+  }
+
   for(list<Meas>::iterator itr = mMeasList.begin(); itr!=mMeasList.end(); itr++)
     {
       Meas &meas = *itr;
