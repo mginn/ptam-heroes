@@ -128,4 +128,4 @@ typedef struct clMeas
 	double dSqrtInvNoise;
 	double m23B[2][3];
 }clMeas;
-};
+

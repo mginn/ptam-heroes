@@ -7,6 +7,9 @@
 #include <iomanip>
 #include <gvars3/instances.h>
 #include "TimeCalculate.h"
+
+#include "KernelCall.h"
+
 using namespace GVars3;
 using namespace std;
 
@@ -271,17 +274,129 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
   printf("Loop itration at line 250 Bundle.cc mMeasList.begin() %d\n", std::distance(mMeasList.begin(),mMeasList.end()));
   double i254=get_wall_time();
 
-  int iLength = std::distance(mMeasList.begin(),mMeasList.end());
+ // int iLength = std::distance(mMeasList.begin(),mMeasList.end());
 
-  clMeas* cMeas;
-  cMeas = (clMeas*)malloc(mMeasList.size() * sizeof(clMeas));
-
+  clMeas* cMeas= (clMeas*)malloc(mMeasList.size() * sizeof(clMeas));
 
 
+
+  int iL = 0;
   for(list<Meas>::iterator itr = mMeasList.begin(); itr!=mMeasList.end(); itr++)
   {
+	  cMeas[iL].bBad = itr->bBad;
+	  cMeas[iL].dErrorSquared = itr->dErrorSquared;
+	  cMeas[iL].dSqrtInvNoise = itr->dSqrtInvNoise;
+	  cMeas[iL].c = itr->c;
+	  cMeas[iL].p = itr->p;
+
+
+	  for(int i = 0; i < 2; i++)
+		  for(int j = 0; j < 3; j++)
+			  cMeas[iL].m23B[i][j] = itr->m23B(i,j);
+
+	  for(int i = 0; i < 2; i++)
+		  for(int j = 0; j < 6; j++)
+			  cMeas[iL].m26A[i][j] = itr->m26A(i,j);
+
+
+	  for(int i = 0; i < 2; i++)
+	  	  for(int j = 0; j < 2; j++)
+	  		  cMeas[iL].m2CamDerivs[i][j] = itr->m2CamDerivs(i,j);
+
+	  for(int i = 0; i < 2; i++)
+		  cMeas[iL].v2Epsilon[i] = itr->v2Epsilon(i);
+
+	  for(int i = 0; i < 3; i++)
+		  cMeas[iL].v3Cam[i] = itr->v3Cam(i);
+
 
   }
+  /*
+  for(int i = 0; i < mMeasList.size(); i++)
+     {
+
+       Camera &cam = mvCameras[cMeas[i].c];
+       Point &point = mvPoints[cMeas[i].p];
+
+       // Project the point.
+       // We've done this before - results are still cached in meas.
+       if(cMeas[i].bBad)
+ 	{
+ 	  dCurrentError += 1.0;
+ 	  continue;
+ 	};
+
+       // What to do with the weights? The easiest option is to independently weight
+       // The two jacobians, A and B, with sqrt of the tukey weight w;
+       // And also weight the error vector v2Epsilon.
+       // That makes everything else automatic.
+       // Calc the square root of the tukey weight:
+       double dWeight= MEstimator::SquareRootWeight(cMeas[i].dErrorSquared, mdSigmaSquared);
+       // Re-weight error:
+       cMeas[i].v2Epsilon[0] = dWeight * cMeas[i].v2Epsilon[0];
+       cMeas[i].v2Epsilon[1] = dWeight * cMeas[i].v2Epsilon[1];
+
+       if(dWeight == 0)
+ 	{
+ 	  cMeas[i].bBad = true;
+ 	  dCurrentError += 1.0;
+ 	  continue;
+ 	}
+
+       dCurrentError += MEstimator::ObjectiveScore(meas.dErrorSquared, mdSigmaSquared);
+
+       // To re-weight the jacobians, I'll just re-weight the camera param matrix
+       // This is only used for the jacs and will save a few fmuls
+       Matrix<2> m2CamDerivs(0) = dWeight * cMeas[i].m2CamDerivs[0];
+       m2CamDerivs(1) = dWeight * cMeas[i].m2CamDerivs[1];
+
+       const double dOneOverCameraZ = 1.0 / cMeas[i].v3Cam[2];
+       const Vector<4> v4Cam = unproject(meas.v3Cam);
+
+       // Calculate A: (the proj derivs WRT the camera)
+       if(cam.bFixed)
+ 	meas.m26A = Zeros;
+       else
+ 	{
+ 	  for(int m=0;m<6;m++)
+ 	    {
+ 	      const Vector<4> v4Motion = SE3<>::generator_field(m, v4Cam);
+  	      Vector<2> v2CamFrameMotion;
+  	      v2CamFrameMotion[0] = (v4Motion[0] - v4Cam[0] * v4Motion[2] * dOneOverCameraZ) * dOneOverCameraZ;
+  	      v2CamFrameMotion[1] = (v4Motion[1] - v4Cam[1] * v4Motion[2] * dOneOverCameraZ) * dOneOverCameraZ;
+  	      meas.m26A.T()[m] = meas.dSqrtInvNoise * m2CamDerivs * v2CamFrameMotion;
+ 	    };
+ 	}
+
+       // Calculate B: (the proj derivs WRT the point)
+       for(int m=0;m<3;m++)
+ 	{
+ 	  const Vector<3> v3Motion = cam.se3CfW.get_rotation().get_matrix().T()[m];
+
+ 	  Vector<2> v2CamFrameMotion;
+ 	  v2CamFrameMotion[0] = (v3Motion[0] - v4Cam[0] * v3Motion[2] * dOneOverCameraZ) * dOneOverCameraZ;
+ 	  v2CamFrameMotion[1] = (v3Motion[1] - v4Cam[1] * v3Motion[2] * dOneOverCameraZ) * dOneOverCameraZ;
+ 	  meas.m23B.T()[m] = meas.dSqrtInvNoise * m2CamDerivs * v2CamFrameMotion;
+ 	};
+
+       // Update the accumulators
+       if(!cam.bFixed)
+ 	{
+ 	  //	  cam.m6U += meas.m26A.T() * meas.m26A; 	  // SLOW SLOW this matrix is symmetric
+ 	  BundleTriangle_UpdateM6U_LL(cam.m6U, meas.m26A);
+ 	  cam.v6EpsilonA += meas.m26A.T() * meas.v2Epsilon;
+ 	  // NOISE COVAR OMITTED because it's the 2-Identity
+ 	}
+
+       //            point.m3V += meas.m23B.T() * meas.m23B;             // SLOW-ish this is symmetric too
+       BundleTriangle_UpdateM3V_LL(point.m3V, meas.m23B);
+       point.v3EpsilonB += meas.m23B.T() * meas.v2Epsilon;
+
+       if(cam.bFixed)
+ 	meas.m63W = Zeros;
+       else
+ 	meas.m63W = meas.m26A.T() * meas.m23B;
+     }*/
 
   for(list<Meas>::iterator itr = mMeasList.begin(); itr!=mMeasList.end(); itr++)
     {
