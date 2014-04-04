@@ -289,6 +289,8 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
 	  cMeas[iL].c = itr->c;
 	  cMeas[iL].p = itr->p;
 
+	  clCam
+
 
 	  for(int i = 0; i < 2; i++)
 		  for(int j = 0; j < 3; j++)
@@ -361,21 +363,21 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
 
        // To re-weight the jacobians, I'll just re-weight the camera param matrix
        // This is only used for the jacs and will save a few fmuls
-       Matrix<2> m2CamDerivs(0) = dWeight * cMeas[i].m2CamDerivs[0];
-       m2CamDerivs(1) = dWeight * cMeas[i].m2CamDerivs[1];
+       double[2][2] m2CamDerivs[0][0] = dWeight * cMeas[i].m2CamDerivs[0];
+       m2CamDerivs[1] = dWeight * cMeas[i].m2CamDerivs[1];
 
        const double dOneOverCameraZ = 1.0 / cMeas[i].v3Cam[2];
-       const Vector<4> v4Cam = unproject(meas.v3Cam);
+       const double[4] v4Cam = unproject(meas.v3Cam);
 
        // Calculate A: (the proj derivs WRT the camera)
-       if(cam.bFixed)
- 	meas.m26A = Zeros;
+       if(cam[i].bFixed)
+ 	meas[i].m26A = Zeros;
        else
  	{
  	  for(int m=0;m<6;m++)
  	    {
- 	      const Vector<4> v4Motion = SE3<>::generator_field(m, v4Cam);
-  	      Vector<2> v2CamFrameMotion;
+ 	      const double[4] v4Motion = SE3<>::generator_field(m, v4Cam);
+  	      double[4] v2CamFrameMotion;
   	      v2CamFrameMotion[0] = (v4Motion[0] - v4Cam[0] * v4Motion[2] * dOneOverCameraZ) * dOneOverCameraZ;
   	      v2CamFrameMotion[1] = (v4Motion[1] - v4Cam[1] * v4Motion[2] * dOneOverCameraZ) * dOneOverCameraZ;
   	      meas.m26A.T()[m] = meas.dSqrtInvNoise * m2CamDerivs * v2CamFrameMotion;
