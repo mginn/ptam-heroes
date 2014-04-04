@@ -313,7 +313,7 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
 
 
   }
-  /*
+  /* Modifying for Kernel
   for(int i = 0; i < mMeasList.size(); i++)
      {
 
@@ -334,7 +334,7 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
        // That makes everything else automatic.
        // Calc the square root of the tukey weight:
 
-
+		//inlined weight function
        if(cMeas[i].dErrorSquared > dSigmaSquared)
     	double dWeight = 0.0;
   	  else
@@ -371,16 +371,16 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
 
        // Calculate A: (the proj derivs WRT the camera)
        if(cam[i].bFixed)
- 	meas[i].m26A = Zeros;
+ 	meas[i].m26A = Zeros; //Transformation matrix how to convert?
        else
  	{
  	  for(int m=0;m<6;m++)
  	    {
- 	      const double[4] v4Motion = SE3<>::generator_field(m, v4Cam);
+ 	      const double[4] v4Motion = SE3<>::generator_field(m, v4Cam); //more inlining, more transformation matrix
   	      double[4] v2CamFrameMotion;
   	      v2CamFrameMotion[0] = (v4Motion[0] - v4Cam[0] * v4Motion[2] * dOneOverCameraZ) * dOneOverCameraZ;
   	      v2CamFrameMotion[1] = (v4Motion[1] - v4Cam[1] * v4Motion[2] * dOneOverCameraZ) * dOneOverCameraZ;
-  	      meas.m26A.T()[m] = meas.dSqrtInvNoise * m2CamDerivs * v2CamFrameMotion;
+  	      meas.m26A.T()[m] = meas.dSqrtInvNoise * m2CamDerivs * v2CamFrameMotion; //more transformation, much problem
  	    };
  	}
 
