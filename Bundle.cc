@@ -331,7 +331,14 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
        // And also weight the error vector v2Epsilon.
        // That makes everything else automatic.
        // Calc the square root of the tukey weight:
-       double dWeight= MEstimator::SquareRootWeight(cMeas[i].dErrorSquared, mdSigmaSquared);
+
+
+       if(cMeas[i].dErrorSquared > dSigmaSquared)
+    	double dWeight = 0.0;
+  	  else
+    	double dWeight = 1.0 - (cMeas[i].dErrorSquared / dSigmaSquared);
+
+
        // Re-weight error:
        cMeas[i].v2Epsilon[0] = dWeight * cMeas[i].v2Epsilon[0];
        cMeas[i].v2Epsilon[1] = dWeight * cMeas[i].v2Epsilon[1];
@@ -343,7 +350,14 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
  	  continue;
  	}
 
-       dCurrentError += MEstimator::ObjectiveScore(meas.dErrorSquared, mdSigmaSquared);
+
+
+       if(dErrorSquared > dSigmaSquared)
+    	dCurrentError += 1.0;
+  	   else {
+  	   double d = 1.0 - dErrorSquared / dSigmaSquared;
+  	  dCurrentError += (1.0 - d*d*d);
+  	  }
 
        // To re-weight the jacobians, I'll just re-weight the camera param matrix
        // This is only used for the jacs and will save a few fmuls
