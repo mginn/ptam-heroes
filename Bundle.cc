@@ -387,7 +387,7 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
        // Calculate B: (the proj derivs WRT the point)
        for(int m=0;m<3;m++)
  	{
- 	  const Vector<3> v3Motion = cam.se3CfW.get_rotation().get_matrix().T()[m];
+ 	  const Vector<3> v3Motion = cam.se3CfW.get_rotation().get_matrix().T()[m]; //Do not like this line
 
  	  Vector<2> v2CamFrameMotion;
  	  v2CamFrameMotion[0] = (v3Motion[0] - v4Cam[0] * v3Motion[2] * dOneOverCameraZ) * dOneOverCameraZ;
